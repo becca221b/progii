@@ -1,7 +1,6 @@
+
 import java.io.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Scanner;
 
 public class Hospital {
@@ -9,15 +8,25 @@ public class Hospital {
 
         Scanner scanner= new Scanner(System.in);
 
+        String encabezado = "";
+        try (Scanner entrada = new Scanner(new File("datos.txt"))) {
+            encabezado = entrada.nextLine();
+        } catch (FileNotFoundException e) {
+            System.err.println("Error al leer los datos del hospital desde el archivo: " + e.getMessage());
+        }
+
+
         GestorHospital gestorHospital= new GestorHospital();
 
         Doctor doctor1= new Doctor("Oscar Sanchez",30123123,"14-05-90","Cardiologia");
         Doctor doctor2= new Doctor("Juan Perez",20123123,"14-05-90","Hematologia");
-        Doctor doctor3= new Doctor("Oscar Sanchez",16123123,"14-05-90","Clinico");
+        Doctor doctor3= new Doctor("Gino Infantino",16123123,"14-05-90","Clinico");
 
-        Paciente paciente1= new Paciente("Jimena",30123123,"14-05-90",12356,"O+";
-        Paciente paciente2= new Paciente("Rebe",20123123,"14-05-90",12356,"O+");
-        Paciente paciente3= new Paciente("Luis",16123123,"14-05-90",12356,"O+");
+        Paciente paciente1= new Paciente("Jimena",36123123,"14-05-90",12356,"O+");
+        Paciente paciente2= new Paciente("Rebe",35123123,"14-05-90",12356,"O+");
+        Paciente paciente3= new Paciente("Luis",34123123,"14-05-90",12356,"O+");
+
+        paciente1.agregarEvento(new Evento("23-08-2023","Gripe"));
 
         gestorHospital.agregarDoctor(doctor1);
         gestorHospital.agregarDoctor(doctor2);
@@ -27,23 +36,22 @@ public class Hospital {
         gestorHospital.agregarPaciente(paciente2);
         gestorHospital.agregarPaciente(paciente3);
 
+        Serializador serializador= new Serializador();
 
-
-
-        int opcion;
-        do {
+        int opcion=1;
+        while (opcion !=8) {
+            System.out.println(encabezado);
             System.out.println("Menú:");
             System.out.println("1. Listar Doctores.");
             System.out.println("2. Registrar un nuevo paciente.");
             System.out.println("3. Actualizar informacion personal de un paciente.");
             System.out.println("4. Consultar el historial médico de un paciente.");
             System.out.println("5. Nuevo historial para un paciente.");
-            System.out.println("6. Guardar Historial de pacientes en archivo \n.");
-            System.out.println("6. Guardar Historial de pacientes en archivo \n.");
+            System.out.println("6. Guardar Historial de pacientes en archivo.");
             System.out.println("7. Cargar Historial de pacientes desde archivo ");
             System.out.println("8. Salir");
-            opcion = scanner.nextInt();
 
+            opcion = scanner.nextInt();
             switch (opcion) {
                 case 1:
                     gestorHospital.listarDoctores();
@@ -51,6 +59,7 @@ public class Hospital {
                 case 2:
                     System.out.println("Ingrese nombre");
                     String nombre= scanner.nextLine();
+                    scanner.nextLine();
                     System.out.println("Ingrese dni");
                     int dni= scanner.nextInt();
                     System.out.println("Ingrese fecha de naciemiento");
@@ -65,29 +74,45 @@ public class Hospital {
                 case 3:
                     System.out.println("Ingrese el nuemro de dni del paciente a modificar");
                     gestorHospital.modificarPaciente(scanner.nextInt());
+
                     break;
                 case 4:
                     System.out.println("Ingrese el nuemro de dni del paciente para consultar su historial");
                     gestorHospital.verHistorial(scanner.nextInt());
                     break;
-
                 case 5:
                     System.out.println("Ingrese el numero de dni para agregar evento al historial");
-                    int nroDni= scanner.nextInt();
-                    gestorHospital.modificarHistorial(nroDni);
+                    gestorHospital.modificarHistorial(scanner.nextInt());
+                    System.out.println("Evento agregado con éxito\n");
                     break;
                 case 6:
-                    Serializador serializador= new Serializador();
-                    serializador.serializar(gestorHospital);
+                    System.out.println("Ingrese el dni del paciente cuyo historial desea guardar");
+                    int buscado= scanner.nextInt();
+                    for(Paciente p: gestorHospital.pacientes){
+                        if(p.dni==buscado){
+                            serializador.serializar(p);
+                        }
+                    }
                     break;
-                case 7:/*
-                    Serializador serializador= new Serializador();
-                    GestorHospital gestorHospitalDeserializado = serializador.deserializar();
-                    break;*/
+                case 7:
+                    Paciente pDeserializado = serializador.deserializar();
+                    System.out.println(String.format("%20s\t%20s","Fecha de evento","Observaciones"));
+                    try{
+                        for(Evento e: pDeserializado.historial){
+
+                            System.out.println(String.format("%20s\t%20s",e.getFechaEvento(),e.getDetalle()));
+                        }
+                    }catch (NullPointerException npe){
+                       System.out.println("Verifique el archivo a cargar");
+                    }
+                    break;
+                case 8:
+                    System.out.println("Chau chau, adiós");
+                    break;
                 default:
                     System.out.println("Opción no válida. Por favor, elija una opción válida.");
             }
-        } while (opcion != 6);
+        }
 
         scanner.close();
     }
@@ -95,13 +120,12 @@ public class Hospital {
 
 
 
-abstract class Persona{
+abstract class Persona implements Serializable{
     protected String nombre;
     protected int dni;
     protected String fechaDeNac;
 
     Persona(){}
-
 
     public Persona(String nombre, int dni, String fechaDeNac) {
         this.nombre = nombre;
@@ -152,10 +176,10 @@ class Doctor extends Persona{
     }
 }
 
-class Paciente extends Persona implements Informacion{
+class Paciente extends Persona implements Informacion, Serializable{
     private int nro_telef;
     private String tipoDeSangre;
-    private ArrayList<Evento> historial;
+    transient ArrayList<Evento> historial;
 
     public Paciente(String nombre, int dni, String fechaDeNac, int nro_telef, String tipoDeSangre) {
         super(nombre, dni, fechaDeNac);
@@ -195,14 +219,23 @@ class Paciente extends Persona implements Informacion{
     @Override
     public void verHistorialDeEventos() {
         for(Evento e: historial){
-            System.out.println("Fecha: "+e.getFechaEvento());
-            System.out.println("Fecha: "+e.getDetalle());
+            System.out.println("Fecha: "+e.getFechaEvento()+" - "+e.getDetalle());
         }
+        System.out.println("\n");
     }
 
+    //Métodos para serializar y deserializar SIN TERMINAR
+    private void writeObject(ObjectOutputStream out) throws IOException{
+        out.defaultWriteObject();
+        out.writeObject(historial);
+    }
+    private void readObject(ObjectInputStream in) throws IOException,ClassNotFoundException {
+        in.defaultReadObject();
+        historial = (ArrayList<Evento>) in.readObject();
+    }
 }
 
-class Evento{
+class Evento implements Serializable{
     private String fechaEvento;
     private String detalle;
 
@@ -229,44 +262,45 @@ class Evento{
 }
 
 class GestorHospital implements Serializable {
-    transient private ArrayList<Doctor> doctores;
+    private ArrayList<Doctor> doctores;
 
-    transient private ArrayList<Paciente> pacientes;
+    transient ArrayList<Paciente> pacientes;
 
-    Scanner scanner= new Scanner(System.in);
+    transient Scanner scanner = new Scanner(System.in);
 
     public GestorHospital() {
-        this.doctores = new ArrayList <>();
-        this.pacientes = new ArrayList <>();
+        this.doctores = new ArrayList<>();
+        this.pacientes = new ArrayList<>();
     }
 
     //metodo para agregar doctor
-    public void agregarDoctor(Doctor doctor){
+    public void agregarDoctor(Doctor doctor) {
         this.doctores.add(doctor);
     }
 
-    public void listarDoctores(){
-        System.out.println(String.format("%20s\t%20s\t%20s","Nombre","DNI", "Fecha de Naciemiento"));
-        for(Doctor d: doctores){
-
-            System.out.println(String.format("%20s\t%20s\t%20s",d.nombre,d.dni,d.fechaDeNac));
+    public void listarDoctores() {
+        System.out.println(String.format("%20s\t%20s\t%20s", "Nombre", "DNI", "Fecha de Naciemiento"));
+        for (Doctor d : doctores) {
+            System.out.println(String.format("%20s\t%20s\t%20s", d.nombre, d.dni, d.fechaDeNac));
         }
+        System.out.println("\n");
     }
 
-    public void agregarPaciente(Paciente paciente){
+    public void agregarPaciente(Paciente paciente) {
         this.pacientes.add(paciente);
     }
 
-    public void modificarPaciente(int dni){
+    public void modificarPaciente(int dni) {
         System.out.println("Ingrese el nuevo nro de telefono");
-        int nroNuevo= scanner.nextInt();
+        int nroNuevo = scanner.nextInt();
         System.out.println("Ingrese el tipo de sangre");
-        String otroTipo= scanner.next();
+        String otroTipo = scanner.next();
 
-        for( Paciente p: pacientes){
-            if(p.dni==dni){
+        for (Paciente p : pacientes) {
+            if (p.dni == dni) {
                 p.setNro_telef(nroNuevo);
                 p.setTipoDeSangre(otroTipo);
+                System.out.println("Paciente modificado con éxito");
                 break;
             }
         }
@@ -295,50 +329,51 @@ class GestorHospital implements Serializable {
         }
     }
 
-
 }
-
 
 interface Informacion{
     void verHistorialDeEventos();
 }
 
 class Serializador{
-    public void serializar(GestorHospital gestorHospital){
+    public void serializar(Paciente paciente){
 
         try {
-            FileOutputStream archivoSalida = new FileOutputStream("pacientes.txt");
+            FileOutputStream archivoSalida = new FileOutputStream("historial.txt");
             ObjectOutputStream salida= new ObjectOutputStream(archivoSalida);
-            salida.writeObject(gestorHospital);
+            salida.writeObject(paciente);
             salida.close();
-        } catch (Exception e) {
+            System.out.println("Archivo guardado con éxito");
+        }catch (NotSerializableException nse)
+        {
+            System.out.println("El objeto a ser serializado no implementa la interfaz Serializable");
+
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
 
     }
 
-    public GestorHospital gestorHospital() {
-        GestorHospital gestorHospital = null;
+    public Paciente deserializar() {
+        Paciente paciente = null;
         try {
-            FileInputStream archivoEntrada = new FileInputStream("pacientes.txt");
+            FileInputStream archivoEntrada = new FileInputStream("historial.txt");
             ObjectInputStream entrada = new ObjectInputStream(archivoEntrada);
-            gestorHospital = (GestorHospital) entrada.readObject();
+            paciente = (Paciente) entrada.readObject();
             entrada.close();
 
+        } catch (FileNotFoundException cnfe)
+        {
+            System.out.println("No se encuentra el archivo a cargar");
+
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return gestorHospital;
+        return paciente;
     }
 }
-/*
-//Métodos para serializar y deserializar SIN TERMINAR
-private void writeObject(ObjectOutputStream out) throws IOException{
-        out.defaultWriteObject();
-        out.writeObject(pacientes);
-}
-private void readObject(ObjectInputStream in) throws IOException,ClassNotFoundException{
-        in.defaultReadObject();
-        pacientes= (ArrayList<Paciente>) in.readObject();
-}*/
+
+
+
