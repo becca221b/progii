@@ -1,4 +1,4 @@
-package Hospital2Parcial;
+
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class Hospital {
+
+
+class Hospital {
     private List<Paciente> listaPacientes;
     private List<Doctor> listaDoctores;
 
@@ -20,8 +22,7 @@ public class Hospital {
     }
 
     public void guardarEnBD(Connection conexion) throws SQLException {
-        String consulta = "UPDATE estudiantes SET nombre = ?, apellido = ?, legajo = ?, dni = ?, " +
-                "fecha_nacimiento = ?, direccion = ?, telefono = ?, email = ? WHERE id = ?";
+        String consulta = "UPDATE pacientes SET nombre = ?";
 
         // Crea un PreparedStatement para ejecutar la consulta SQL con valores reales.
         PreparedStatement preparedStatement = conexion.prepareStatement(consulta);
@@ -29,6 +30,16 @@ public class Hospital {
         listaPacientes.forEach(n-> {
             try {
                 preparedStatement.setString(1, n.getNombre());
+
+                // Ejecuta la consulta SQL y obtiene el número de filas afectadas.
+                int filasAfectadas = preparedStatement.executeUpdate();
+
+                // Verifica si la edición fue exitosa y muestra un mensaje apropiado.
+                if (filasAfectadas > 0) {
+                    System.out.println("Paciente editado exitosamente.");
+                } else {
+                    System.out.println("No se pudo editar el estudiante.");
+                }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -45,38 +56,12 @@ public class Hospital {
 
         */
 
-
-
-
         preparedStatement.close();
 
 
     }
 
-    public static void main(String[] args) {
-        // Datos de conexión a la base de datos (ajusta estos valores según tu configuración)
-        String url = "jdbc:mysql://localhost:3306/hospital_db";
-        String usuario = "root";
-        String pass = "";
 
-        Scanner scanner = new Scanner(System.in);
-
-        try {
-            // Establecer la conexión a la base de datos
-            Connection conexion = DriverManager.getConnection(url, usuario, pass);
-            Hospital hospital= new Hospital();
-
-            Paciente paciente3= new Paciente("Paciente 3",30,"Historial3");
-
-            hospital.listaPacientes.add(paciente3);
-
-            hospital.guardarEnBD(conexion);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-
-    }
 }
 
 abstract class Persona{
@@ -159,6 +144,34 @@ class Doctor extends Persona {
 
     public void setEspecialidad(String especialidad) {
         this.especialidad = especialidad;
+    }
+}
+
+class Principal{
+    public static void main(String[] args) {
+        // Datos de conexión a la base de datos (ajusta estos valor0es según tu configuración)
+        String url = "jdbc:mysql://localhost:3306/hospital";
+        String usuario = "root";
+        String pass = "";
+
+        Scanner scanner = new Scanner(System.in);
+
+        try {
+            // Establecer la conexión a la base de datos
+            Connection conexion = DriverManager.getConnection(url, usuario, pass);
+
+            Hospital hospital= new Hospital();
+
+            Paciente paciente3= new Paciente("Paciente 3",30,"Historial3");
+
+            hospital.getListaPacientes().add(paciente3);
+
+            hospital.guardarEnBD(conexion);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
     }
 }
 
