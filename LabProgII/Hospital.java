@@ -1,14 +1,8 @@
-
-
-import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
-
-
-class Hospital {
+public class Hospital{
     private List<Paciente> listaPacientes;
     private List<Doctor> listaDoctores;
 
@@ -21,50 +15,19 @@ class Hospital {
         return listaPacientes;
     }
 
-    public void guardarEnBD(Connection conexion) throws SQLException {
-        String consulta = "UPDATE pacientes SET nombre = ?";
-
-        // Crea un PreparedStatement para ejecutar la consulta SQL con valores reales.
-        PreparedStatement preparedStatement = conexion.prepareStatement(consulta);
-
-        listaPacientes.forEach(n-> {
-            try {
-                preparedStatement.setString(1, n.getNombre());
-
-                // Ejecuta la consulta SQL y obtiene el número de filas afectadas.
-                int filasAfectadas = preparedStatement.executeUpdate();
-
-                // Verifica si la edición fue exitosa y muestra un mensaje apropiado.
-                if (filasAfectadas > 0) {
-                    System.out.println("Paciente editado exitosamente.");
-                } else {
-                    System.out.println("No se pudo editar el estudiante.");
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }); // Asigna el valor del nuevo nombre.
-        /*
-        preparedStatement.setString(2, nuevoApellido); // Asigna el valor del nuevo apellido.
-        preparedStatement.setString(3, nuevoLegajo); // Asigna el valor del nuevo legajo.
-        preparedStatement.setString(4, nuevoDNI); // Asigna el valor del nuevo DNI.
-        preparedStatement.setString(5, nuevaFechaNacimiento); // Asigna el valor de la nueva fecha de nacimiento.
-        preparedStatement.setString(6, nuevaDireccion); // Asigna el valor de la nueva dirección.
-        preparedStatement.setString(7, nuevoTelefono); // Asigna el valor del nuevo teléfono.
-        preparedStatement.setString(8, nuevoEmail); // Asigna el valor del nuevo email.
-        preparedStatement.setInt(9, id); // Asigna el ID del estudiante que se va a editar.);
-
-        */
-
-        preparedStatement.close();
-
-
+    public List<Doctor> getListaDoctores() {
+        return listaDoctores;
     }
 
+    public void agregarPaciente(Paciente paciente){
+        listaPacientes.add(paciente);
+        dbHelper.save();
 
+    }
 }
 
 abstract class Persona{
+    private int id;
     private String nombre;
     private int edad;
 
@@ -88,6 +51,11 @@ abstract class Persona{
     public void setEdad(int edad) {
         this.edad = edad;
     }
+
+    public int getId() {
+        return id;
+    }
+
 }
 
 class Paciente extends Persona{
@@ -147,31 +115,17 @@ class Doctor extends Persona {
     }
 }
 
+class dbHelper{
+    // Datos de conexión a la base de datos (ajusta estos valor0es según tu configuración)
+    private String url = "jdbc:mysql://localhost:3306/hospital";
+    private String usuario = "root";
+    private String pass = "";
+
+
+}
+
 class Principal{
     public static void main(String[] args) {
-        // Datos de conexión a la base de datos (ajusta estos valor0es según tu configuración)
-        String url = "jdbc:mysql://localhost:3306/hospital";
-        String usuario = "root";
-        String pass = "";
-
-        Scanner scanner = new Scanner(System.in);
-
-        try {
-            // Establecer la conexión a la base de datos
-            Connection conexion = DriverManager.getConnection(url, usuario, pass);
-
-            Hospital hospital= new Hospital();
-
-            Paciente paciente3= new Paciente("Paciente 3",30,"Historial3");
-
-            hospital.getListaPacientes().add(paciente3);
-
-            hospital.guardarEnBD(conexion);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
 
     }
 }
-
